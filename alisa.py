@@ -1,20 +1,14 @@
 import sys
 import pickle
 
-#import date
-#import test
+
 from PyQt6 import QtWidgets, QtCore
 from PyQt6.QtCore import Qt
 
 
-with open('example.txt', 'rb') as file:
+with open('data/db.txt', 'rb') as file:
     readed_data = pickle.load(file)
-    #print(type(readed_data), readed_data)
 
-
-with open('test1.txt', 'rb') as file:
-    readed_data = pickle.load(file)
-    #print(type(readed_data), readed_data)
 
 '''
 print('начнем...')
@@ -63,7 +57,7 @@ class MyTable(QtWidgets.QMainWindow):
             for column in range(self.table_widget.columnCount()):# для каждого столбца
                 qwer = readed_data.get(keysnow)
                 value = qwer[column] # предполагаю, что должен смотреть на содержание списка и вставлять его в нужную ячейку
-                
+
                 #print(value)
                 #checkbox_item = QtWidgets.QTableWidgetItem(str(row))#пока не понятно...
                 checkbox_item = QtWidgets.QTableWidgetItem()#пока не понятно...
@@ -96,6 +90,7 @@ class MyTable(QtWidgets.QMainWindow):
 
 def eventFilter(self, source, event):
     print(event)
+
 
 if __name__ == "__main__":
     # Создание объекта приложения

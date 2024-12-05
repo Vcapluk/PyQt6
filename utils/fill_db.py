@@ -1,13 +1,8 @@
 import pickle
 
-data = {"Ex": None}
 
-with open('example.txt', 'wb') as file:
-    pickle.dump(data, file)
-    print('эксампл')
-    print(data)
-
-dict_spisok1 = {
+_DB_PATH = 'data/db.txt'
+_DB_DUMP = {
     'Присоединение': ['Территория','Секция','Ячейка вкачена', 'ЗН включены', 'ПЗ установлено', 'Примечание' ],
     'БН-1' : [ 'БН-II','Секция №1', True, True, True,'ТН'],
     'БН-2':[ 'БН-II','Секция №1', True, True, False,'Ввод'],
@@ -36,7 +31,8 @@ dict_spisok1 = {
 
 }
 
-with open('test1.txt', 'wb') as file:
-    pickle.dump(dict_spisok1, file)
-    print(dict_spisok1)
-    print(5434)
+
+with open(_DB_PATH, 'wb') as fd:
+    pickle.dump(_DB_DUMP, fd)
+    print(f'DB was saved to {_DB_PATH}')
+    print(_DB_DUMP)
