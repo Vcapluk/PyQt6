@@ -6,41 +6,20 @@ import pickle
 from PyQt6 import QtWidgets, QtCore
 from PyQt6.QtCore import Qt
 
-
-with open('example.txt', 'rb') as file:
-    readed_data = pickle.load(file)
-    #print(type(readed_data), readed_data)
-
-
 with open('test1.txt', 'rb') as file:
     readed_data = pickle.load(file)
     #print(type(readed_data), readed_data)
 
-'''
-print('начнем...')
-value = readed_data.get('Присоединение')
-print(value) 
-print(value[0])
-valuelen = len(value)
-print(valuelen)# гуд, выдает количество столбиков
-'''
 qwerty = len(readed_data.get('Присоединение'))
 print(qwerty)
 
 print('А сейчас магия не случится')
 #qwer1 = readed_data
 #print(qwer1)
-keys = list(readed_data.keys())
-keys1 = keys[1]
-print(type(keys1))
-print(keys1)
-
-
-print('А сейчас магия не случится')
-print('А сейчас магия не случится')
-print('А сейчас магия не случится')
-print(type(keys[1]))
-print(keys[1])
+#keys = list(readed_data.keys())
+#keys1 = keys[1]
+#print(type(keys1))
+#print(keys1)
 
 rowfull = int(len(readed_data))
 columnfull = int(len(readed_data.get('Присоединение')))
@@ -71,7 +50,7 @@ class MyTable(QtWidgets.QMainWindow):
                 # здесь проверяем содержимое. если тру или фолс - то чекбокс актив/неактив, иначе просто текст
                 if value == True:
                     checkbox_item.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
-                    checkbox_item.setCheckState(Qt.CheckState.Checked)
+                    checkbox_item.setCheckState(Qt.CheckState.Checked) # Говорим, 
                     #checkbox_item.setText('включен')
                     self.table_widget.setItem(row, column, checkbox_item)
                 elif value == False:

@@ -1,12 +1,5 @@
 import pickle
 
-data = {"Ex": None}
-
-with open('example.txt', 'wb') as file:
-    pickle.dump(data, file)
-    print('эксампл')
-    print(data)
-
 dict_spisok1 = {
     'Присоединение': ['Территория','Секция','Ячейка вкачена', 'ЗН включены', 'ПЗ установлено', 'Примечание' ],
     'БН-1' : [ 'БН-II','Секция №1', True, True, True,'ТН'],
