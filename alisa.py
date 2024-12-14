@@ -62,6 +62,8 @@ class MyTable(QtWidgets.QMainWindow):
                     checkbox_item.setText(value)
                     self.table_widget.setItem(row, column, checkbox_item)
                     #print(value)
+            
+
 
 
 '''

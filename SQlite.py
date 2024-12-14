@@ -3,6 +3,7 @@ import sys
 
 from PyQt6 import QtWidgets, QtCore
 from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QCheckBox, QTableWidget, QTableWidgetItem
 
 
 connection = sqlite3.connect('my_test.db') # подключаюсь к БД
@@ -216,7 +217,7 @@ for cnnctnm in switch:
 connection.commit()
 connection.close()
 
-#print(readed_data)
+print(readed_data)
 # создаем окно...
 
 rowfull = int(len(readed_data))
@@ -241,6 +242,12 @@ class MyTable(QtWidgets.QMainWindow):
                 qwer = readed_data.get(keysnow)
                 value = qwer[column] # предполагаю, что должен смотреть на содержание списка и вставлять его в нужную ячейку
                 
+
+                checkbox = QCheckBox()
+                self.table_widget.setCellWidget(row, column, checkbox)
+                checkbox.stateChanged.connect(lambda state, row=row, col=column: self.checkbox_state_changed(state, row, col))
+                
+                
                 #print(value)
                 #checkbox_item = QtWidgets.QTableWidgetItem(str(row))#пока не понятно...
                 checkbox_item = QtWidgets.QTableWidgetItem()#пока не понятно...
@@ -260,6 +267,20 @@ class MyTable(QtWidgets.QMainWindow):
                     checkbox_item.setText(value)
                     self.table_widget.setItem(row, column, checkbox_item)
                     #print(value)
+                #self.table_widget.clicked.connect(self.on_click)
+        
+        
+        layout = QVBoxLayout()
+        layout.addWidget(self.table_widget)
+        self.setLayout(layout)
+
+
+def checkbox_state_changed(self, state, row, col):
+    print(f'Чекбокс изменён на строке {row}, столбце {col}')
+
+#def on_click(self, item):
+#    print(f"Пользователь выбрал строку {item.text()}.")
+
 
 def eventFilter(self, source, event):
     print(event)
