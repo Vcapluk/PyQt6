@@ -101,7 +101,7 @@ connection.close()
 
 # пробую создать цикл, который из списка(списка ли?) сдлает 24 записи в БД
 
-# вставляем список сюда:
+# вставляем словарь сюда:
 dict_spisok1 = {
     'Присоединение': ['Территория','Секция','Ячейка вкачена', 'ЗН включены', 'ПЗ установлено', 'Примечание' ],
     'БН-1' : [ 'БН-II','Секция №1', 'On', 'On', 'On','ТН'],
@@ -183,6 +183,7 @@ switch = cursor.fetchall()
 for cnnctnm in switch:
     znach = [cnnctnm[1]]
     spis = [ 
+        cnnctnm[1],
         cnnctnm[2],
         cnnctnm[3],
         cnnctnm[4],
@@ -190,12 +191,12 @@ for cnnctnm in switch:
         cnnctnm[6],
         cnnctnm[7]
     ]
-
+ 
     cnnctnm_dict = dict.fromkeys(znach, spis)    
     readed_data.update(cnnctnm_dict)
 
 rowfull = int(len(readed_data)) #сколько будет строк?
-columnfull = int(len(readed_data['Присоединение']))#сколько будет столбиков
+columnfull = int(len(readed_data['Присоединение']))#сколько будет столбиков. Потерялся столбик с именем присоединения. Занесем ка имя в словарь в качестве значения
 class MyTable(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -227,26 +228,13 @@ class MyTable(QtWidgets.QMainWindow):
                 else:
                     checkbox_item.setText(value)
                     self.table_widget.setItem(row, column, checkbox_item)
-                   
-                    
-        
+
+# бъемся над проблемой отслеживания нажатия на чекбокс. пока не растет. 3 дня прошло.    
+# В примерах от ИИ все как бы работает... Но как???? Наверняка надо переписывать заполнение таблицы данными...
         
         layout = QVBoxLayout()
         layout.addWidget(self.table_widget)
         self.setLayout(layout)
-
-
-def checkbox_state_changed(self, state, row, col):
-    print(f'Чекбокс изменён на строке {row}, столбце {col}')
-    print(self)
-    print(state)
-
-def on_click(self, item):
-    print(f"Пользователь выбрал строку {item.text()}.")
-
-
-def eventFilter(self, source, event):
-    print(event)
 
 connection.commit()
 connection.close()

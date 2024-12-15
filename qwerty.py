@@ -10,7 +10,7 @@ class MyApp(QWidget):
 
     def initUI(self):
         self.table = QTableWidget(self)
-        self.table.setColumnCount(6)  # 6 столбцов для данных
+        self.table.setColumnCount(7)  # 6 столбцов для данных
         self.table.verticalHeader().setVisible(False)
         #self.table.cellChanged.connect(self.cell_changed)
 
@@ -64,7 +64,7 @@ class MyApp(QWidget):
                 
                 checkbox = QCheckBox()
                 
-                self.table.setCellWidget(row, column, checkbox)
+                self.table.setCellWidget(row, column+1, checkbox)
                 #checkbox.stateChanged.connect(lambda state, r=row, c=column: self.checkbox_clicked(r, c))
                 #checkbox.setChecked(value == "On")
                 

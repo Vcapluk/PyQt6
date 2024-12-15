@@ -41,8 +41,10 @@ def checkbox_changed(state, column, name, table):
     if index.isValid():
         row = index.row()
         name = table.item(row, 0).text() #get the name from the table
+        value = '4555'
         value = "есть" if state == Qt.CheckState.Checked else "нет"
         print(f"Имя: {name}, Столбец: {table.horizontalHeaderItem(column).text()}, Новое значение: {value}")
+        print(f'{Qt.CheckState.Checked}')
 
 class MainWindow(QWidget):
     def __init__(self, data):
