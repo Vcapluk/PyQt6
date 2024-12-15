@@ -1,6 +1,6 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QWidget, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QVBoxLayout
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QApplication, QWidget, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QVBoxLayout, QAbstractItemView
+from PyQt6.QtCore import Qt, QModelIndex
 
 class PersonData:
     def __init__(self, name, pet_cat, pet_dog, car, notes):
@@ -15,7 +15,8 @@ def create_table(data, parent):
     table.setColumnCount(5)
     table.setHorizontalHeaderLabels(["Имя", "Кошка", "Собака", "Машина", "Заметки"])
     table.setRowCount(len(data))
-    
+    table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows) #Select whole row
+
     for row, (name, person_data) in enumerate(data.items()):
         table.setItem(row, 0, QTableWidgetItem(name))
 
@@ -34,17 +35,14 @@ def create_table(data, parent):
     return table
 
 def checkbox_changed(state, column, name, table):
-    row = table.currentRow()
-    if column == 1:
-        value = "есть" if state == Qt.CheckState.Checked else "нет"
-        print(f"Имя: {name}, Столбец: Кошка, Новое значение: {value}")
-    elif column == 2:
-        value = "есть" if state == Qt.CheckState.Checked else "нет"
-        print(f"Имя: {name}, Столбец: Собака, Новое значение: {value}")
-    elif column == 3:
-        value = "есть" if state == Qt.CheckState.Checked else "нет"
-        print(f"Имя: {name}, Столбец: Машина, Новое значение: {value}")
+    checkbox = table.sender() #get the sender of the signal
+    index = table.indexAt(checkbox.pos()) #get the index of the checkbox within the table
 
+    if index.isValid():
+        row = index.row()
+        name = table.item(row, 0).text() #get the name from the table
+        value = "есть" if state == Qt.CheckState.Checked else "нет"
+        print(f"Имя: {name}, Столбец: {table.horizontalHeaderItem(column).text()}, Новое значение: {value}")
 
 class MainWindow(QWidget):
     def __init__(self, data):
