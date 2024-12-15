@@ -173,31 +173,12 @@ for key in dict_spisok1:
 '''
 
 #пробуем напечатать то, что получилось...
-readed_data = {}
+readed_data = {} #пустой словарь для записей
 connection = sqlite3.connect('my_test.db') # подключаюсь к БД
 cursor = connection.cursor() # создаем курсор, нужен для соединения программы и БД
 
 cursor.execute('SELECT * FROM Switch_t')
 switch = cursor.fetchall()
-#for cnnctnm in switch:
-#    print('*****')
-#    print(cnnctnm)
-
-'''
-
-for cnnctnm in switch:
-    cnnctnm_dict = {
-        'connectionname': cnnctnm[1],
-        'terra': cnnctnm[2],
-        'sekciya': cnnctnm[3],
-        'yach': cnnctnm[4],
-        'zn': cnnctnm[5],
-        'pz': cnnctnm[6],
-        'annotation': cnnctnm[7],
-        
-    }
-    readed_data.append(cnnctnm_dict)
-    '''
 
 for cnnctnm in switch:
     znach = [cnnctnm[1]]
@@ -211,17 +192,10 @@ for cnnctnm in switch:
     ]
 
     cnnctnm_dict = dict.fromkeys(znach, spis)    
-    #print(cnnctnm_dict)
     readed_data.update(cnnctnm_dict)
 
-connection.commit()
-connection.close()
-
-print(readed_data)
-# создаем окно...
-
-rowfull = int(len(readed_data))
-columnfull = int(len(readed_data['Присоединение']))
+rowfull = int(len(readed_data)) #сколько будет строк?
+columnfull = int(len(readed_data['Присоединение']))#сколько будет столбиков
 class MyTable(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -233,41 +207,28 @@ class MyTable(QtWidgets.QMainWindow):
         self.table_widget.setColumnCount(columnfull) #столбики
         keys = list(readed_data.keys())# говорим пролистать все значения ключей и записать их в список
 
-        # Создаём цикл для добавления чекбоксов в каждую ячейку таблицы
+        # Создаём цикл для добавления чекбоксов в каждую ячейку таблицы, где будут определенные значения
         for row in range(self.table_widget.rowCount()):# в каждую строку
             keysnow = keys[row] #говорю, какую строку списка будем смотреть
-            #print('------ новые значения ------')
-            #print(keysnow)
             for column in range(self.table_widget.columnCount()):# для каждого столбца
                 qwer = readed_data.get(keysnow)
                 value = qwer[column] # предполагаю, что должен смотреть на содержание списка и вставлять его в нужную ячейку
-                
-
-                checkbox = QCheckBox()
-                self.table_widget.setCellWidget(row, column, checkbox)
-                checkbox.stateChanged.connect(lambda state, row=row, col=column: self.checkbox_state_changed(state, row, col))
-                
-                
-                #print(value)
-                #checkbox_item = QtWidgets.QTableWidgetItem(str(row))#пока не понятно...
                 checkbox_item = QtWidgets.QTableWidgetItem()#пока не понятно...
-                #print(value)
-                # здесь проверяем содержимое. если тру или фолс - то чекбокс актив/неактив, иначе просто текст
+                
+                # здесь проверяем содержимое. если on или off - то чекбокс актив/неактив, иначе просто текст
                 if value == 'On':
                     checkbox_item.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
-                    checkbox_item.setCheckState(Qt.CheckState.Checked) # Говорим, 
-                    #checkbox_item.setText('включен')
+                    checkbox_item.setCheckState(Qt.CheckState.Checked) # Говорим, что чекбокс включен
                     self.table_widget.setItem(row, column, checkbox_item)
                 elif value == 'Off':
                     checkbox_item.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
-                    checkbox_item.setCheckState(Qt.CheckState.Unchecked)
-                    #checkbox_item.setText('выключен')
+                    checkbox_item.setCheckState(Qt.CheckState.Unchecked) # Говорим, что чекбокс выключен
                     self.table_widget.setItem(row, column, checkbox_item)
                 else:
                     checkbox_item.setText(value)
                     self.table_widget.setItem(row, column, checkbox_item)
-                    #print(value)
-                #self.table_widget.clicked.connect(self.on_click)
+                   
+                    
         
         
         layout = QVBoxLayout()
@@ -277,13 +238,18 @@ class MyTable(QtWidgets.QMainWindow):
 
 def checkbox_state_changed(self, state, row, col):
     print(f'Чекбокс изменён на строке {row}, столбце {col}')
+    print(self)
+    print(state)
 
-#def on_click(self, item):
-#    print(f"Пользователь выбрал строку {item.text()}.")
+def on_click(self, item):
+    print(f"Пользователь выбрал строку {item.text()}.")
 
 
 def eventFilter(self, source, event):
     print(event)
+
+connection.commit()
+connection.close()
 
 if __name__ == "__main__":
     # Создание объекта приложения
