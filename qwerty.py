@@ -8,9 +8,48 @@ class MyApp(QWidget):
         self.initUI()
         self.load_data()
 
+
+'''
+        self.create_table_from_db()
+    
+
+
+    def create_table_from_db(db_path, table_name, parent):
+    conn = sqlite3.connect(db_path) # Connect to the database
+    cursor = conn.cursor()
+
+    cursor.execute(f"SELECT * FROM {table_name}")
+    data = cursor.fetchall()
+    column_names = [description[0] for description in cursor.description] #Get column names
+    conn.close()
+
+
+    table = QTableWidget(parent)
+    table.setColumnCount(len(column_names))
+    table.setHorizontalHeaderLabels(column_names)
+    table.setRowCount(len(data))
+    table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+
+
+    for row, row_data in enumerate(data):
+        for col, cell_data in enumerate(row_data):
+            if cell_data == "йцукен":
+                checkbox = QCheckBox()
+                checkbox.setChecked(True) #Initially checked if value is "йцукен"
+                table.setCellWidget(row, col, checkbox)
+            else:
+                item = QTableWidgetItem(str(cell_data)) #Convert to string for safety
+                table.setItem(row, col, item)
+
+    table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+    return table
+
+   ''' 
+
+
     def initUI(self):
         self.table = QTableWidget(self)
-        self.table.setColumnCount(7)  # 6 столбцов для данных
+        self.table.setColumnCount(8)  # 6 столбцов для данных
         self.table.verticalHeader().setVisible(False)
         #self.table.cellChanged.connect(self.cell_changed)
 
@@ -57,14 +96,19 @@ class MyApp(QWidget):
             for column in range(self.table.columnCount()):# для каждого столбца
                 self.table.setRowCount(rowfull) # строки
                 self.table.setColumnCount(columnfull) #столбики
-                
+
+        for row in range(rowfull):# в каждую строку
+            keysnow = keys[row] #говорю, какую строку списка будем смотреть
+            for column in range(columnfull):# для каждого столбца
+                self.table.setRowCount(rowfull) # строки
+
                 qwer = readed_data.get(keysnow)
                 value = qwer[column]
                 #print(value)
                 
                 checkbox = QCheckBox()
                 
-                self.table.setCellWidget(row, column+1, checkbox)
+                self.table.setCellWidget(row, column, checkbox)
                 #checkbox.stateChanged.connect(lambda state, r=row, c=column: self.checkbox_clicked(r, c))
                 #checkbox.setChecked(value == "On")
                 
