@@ -1,74 +1,89 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QWidget, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QVBoxLayout, QAbstractItemView
-from PyQt6.QtCore import Qt, QModelIndex
+import sqlite3
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLineEdit, QDialog, QLabel, QGridLayout, QMessageBox
+from PyQt6.QtCore import Qt
 
-class PersonData:
-    def __init__(self, name, pet_cat, pet_dog, car, notes):
-        self.name = name
-        self.pet_cat = pet_cat
-        self.pet_dog = pet_dog
-        self.car = car
-        self.notes = notes
 
-def create_table(data, parent):
-    table = QTableWidget(parent)
-    table.setColumnCount(5)
-    table.setHorizontalHeaderLabels(["Имя", "Кошка", "Собака", "Машина", "Заметки"])
-    table.setRowCount(len(data))
-    table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows) #Select whole row
+def add_new_record(db_path, table_name):
+    """Открывает диалоговое окно для добавления новой записи и добавляет ее в БД."""
+    dialog = AddRecordDialog(db_path, table_name)
+    result = dialog.exec()
+    if result == QDialog.DialogCode.Accepted:
+        print("Новая запись добавлена.")
+    else:
+        print("Добавление записи отменено.")
 
-    for row, (name, person_data) in enumerate(data.items()):
-        table.setItem(row, 0, QTableWidgetItem(name))
 
-        def create_checkbox(column, value):
-            checkbox = QCheckBox()
-            checkbox.setChecked(value == "есть")
-            checkbox.stateChanged.connect(lambda state, col=column, name=name: checkbox_changed(state, col, name, table))
-            return checkbox
+class AddRecordDialog(QDialog):
+    def __init__(self, db_path, table_name):
+        super().__init__()
+        self.setWindowTitle("Добавить новую запись")
+        self.db_path = db_path
+        self.table_name = table_name
+        self.table_index_for_update = ['id', 'connectionname', 'terra', 'sekciya', 'yach', 'zn', 'pz', 'annotation']
+        self.create_widgets()
 
-        table.setCellWidget(row, 1, create_checkbox(1, person_data.pet_cat))
-        table.setCellWidget(row, 2, create_checkbox(2, person_data.pet_dog))
-        table.setCellWidget(row, 3, create_checkbox(3, person_data.car))
-        table.setItem(row, 4, QTableWidgetItem(person_data.notes))
+    def create_widgets(self):
+        grid = QGridLayout()
+        self.fields = {}
 
-    table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch) # Растягиваем колонки
-    return table
+        # Нет необходимости запрашивать информацию о столбцах из базы данных, так как она уже известна
+        row_num = 0
+        for column_name in self.table_index_for_update:
+            label = QLabel(column_name + ":")
+            line_edit = QLineEdit()
+            grid.addWidget(label, row_num, 0)
+            grid.addWidget(line_edit, row_num, 1)
+            self.fields[column_name] = line_edit
+            row_num += 1
 
-def checkbox_changed(state, column, name, table):
-    checkbox = table.sender() #get the sender of the signal
-    index = table.indexAt(checkbox.pos()) #get the index of the checkbox within the table
 
-    if index.isValid():
-        row = index.row()
-        name = table.item(row, 0).text() #get the name from the table
-        value = '4555'
-        value = "есть" if state == Qt.CheckState.Checked else "нет"
-        print(f"Имя: {name}, Столбец: {table.horizontalHeaderItem(column).text()}, Новое значение: {value}")
-        print(f'{Qt.CheckState.Checked}')
+        button_box = QVBoxLayout()
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(self.accept)
+        cancel_button = QPushButton("Отмена")
+        cancel_button.clicked.connect(self.reject)
+        button_box.addWidget(ok_button)
+        button_box.addWidget(cancel_button)
+        grid.addLayout(button_box, row_num, 0, 1, 2)
+
+        self.setLayout(grid)
+
+    def accept(self):
+        try:
+            #Здесь мы используем self.table_index_for_update для корректного порядка значений
+            data = tuple(self.fields[field].text() for field in self.table_index_for_update)
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+
+            #Строка запроса формируется динамически, без использования ','.join
+            placeholders = ','.join(['?'] * len(self.table_index_for_update))
+            query = f"INSERT INTO {self.table_name} ({','.join(self.table_index_for_update)}) VALUES ({placeholders})"
+            cursor.execute(query, data)
+            conn.commit()
+            conn.close()
+            super().accept()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка при добавлении записи: {e}")
+
 
 class MainWindow(QWidget):
-    def __init__(self, data):
+    def __init__(self, db_path, table_name):
         super().__init__()
-
-        self.setWindowTitle("Данные о людях")
-        self.table = create_table(data, self)
+        self.setWindowTitle("Добавление записи в базу данных")
+        self.db_path = db_path
+        self.table_name = table_name
         self.layout = QVBoxLayout(self)
-        self.layout.addWidget(self.table)
+        add_button = QPushButton("Добавить запись")
+        add_button.clicked.connect(lambda: add_new_record(self.db_path, self.table_name))
+        self.layout.addWidget(add_button)
         self.setLayout(self.layout)
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-
-    # Пример данных
-    people_data = {
-        "Иван": PersonData("Иван", "есть", "нет", "есть", "Любит рыбалку"),
-        "Петр": PersonData("Петр", "нет", "есть", "нет", "Занимается спортом"),
-        "Сидор": PersonData("Сидор", "есть", "есть", "есть", "Коллекционирует марки"),
-        "Анна": PersonData("Анна", "нет", "нет", "есть", "Увлекается живописью"),
-        "Елена": PersonData("Елена", "есть", "нет", "нет", "Работает программистом"),
-    }
-
-    window = MainWindow(people_data)
+    table_index_for_update = [ 'id', 'connectionname', 'terra', 'sekciya', 'yach', 'zn', 'pz', 'annotation' ]
+    db_path = "my_test.db" 
+    table_name = "Switch_t"
+    window = MainWindow(db_path, table_name)
     window.show()
     sys.exit(app.exec())

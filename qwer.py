@@ -1,16 +1,17 @@
 import sys
 import sqlite3 
 from PyQt6.QtWidgets import QApplication, QWidget, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QVBoxLayout, QAbstractItemView
-from PyQt6.QtCore import Qt, QModelIndex
+from PyQt6.QtCore import Qt
+
 
 
 def create_table_from_db(db_path, table_name, parent):
     conn = sqlite3.connect(db_path) 
     cursor = conn.cursor()
-
+   
     cursor.execute(f"SELECT * FROM {table_name}")
     data = cursor.fetchall()
-    column_names = [description[2] for description in cursor.description] 
+    column_names = [description[1] for description in cursor.description] 
     conn.close()
 
 
@@ -20,18 +21,17 @@ def create_table_from_db(db_path, table_name, parent):
     table.setRowCount(len(data))
     table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
 
-
     for row, row_data in enumerate(data):
         for col, cell_data in enumerate(row_data):
             if cell_data == "On":
                 checkbox = QCheckBox()
                 checkbox.setChecked(True)
-                checkbox.stateChanged.connect(lambda state, r=row, c=col, cb=checkbox: checkbox_changed(state, r, c, table, cb))
+                checkbox.stateChanged.connect(lambda state, r=row, c=col, cb=checkbox: checkbox_changed(r, c, cb))
                 table.setCellWidget(row, col, checkbox)
             elif cell_data == "Off":
                 checkbox = QCheckBox()
                 checkbox.setChecked(False) 
-                checkbox.stateChanged.connect(lambda state, r=row, c=col, cb=checkbox: checkbox_changed(state, r, c, table, cb))
+                checkbox.stateChanged.connect(lambda state, r=row, c=col, cb=checkbox: checkbox_changed(r, c, cb))
                 table.setCellWidget(row, col, checkbox)
             else:
                 item = QTableWidgetItem(str(cell_data)) 
@@ -41,7 +41,7 @@ def create_table_from_db(db_path, table_name, parent):
     return table
 
 
-def checkbox_changed(state, row, col, table, checkbox):
+def checkbox_changed(row, col, checkbox):
     previous_state = Qt.CheckState.Checked if checkbox.isChecked() else Qt.CheckState.Unchecked
     #action = "проставлен" if state == Qt.CheckState.Checked else "снят"
     #print(f"Состояние чекбокса в строке {row + 1}, столбце {col + 1}: {action} (было: {'проставлен' if previous_state == Qt.CheckState.Checked else 'снят'})")
@@ -50,40 +50,30 @@ def checkbox_changed(state, row, col, table, checkbox):
         stat = 'On'
     else:
         stat = 'Off'
-    update_checkbox(row,col)
+    update_checkbox(row,col,stat)
     
 
-'''
-def checkbox_changed(state, row, col, table, checkbox, db_path, table_name):
-    previous_state = Qt.CheckState.Checked if checkbox.isChecked() else Qt.CheckState.Unchecked
-    action = "проставлен" if state == Qt.CheckState.Checked else "снят"
-    print(f"Состояние чекбокса в строке {row + 1}, столбце {col + 1}: {action} (было: {'проставлен' if previous_state == Qt.CheckState.Checked else 'снят'})")
-
-    new_state = "On" if state == Qt.CheckState.Checked else "Off"
-
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    # Получаем ID записи (предполагается, что у вас есть столбец ID) - ЗАМЕНИТЕ 'id' на имя вашего столбца ID
-    cursor.execute(f"SELECT id FROM {table_name} LIMIT {row + 1}, 1") #Обратите внимание на LIMIT {row + 1},1
-    row_id = cursor.fetchone()[0] #Берем только первый элемент кортежа
-
-    cursor.execute(f"UPDATE {table_name} SET column{col + 1} = ? WHERE id = ?", (new_state, row_id)) # Исправлено: используем column{col+1}
-    conn.commit()
-    conn.close()
-'''
-def update_checkbox(stat):
-    '''conn = sqlite3.connect(db_path) 
-    cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM {table_name}")
-    data = cursor.fetchall()
-    column_names = [description[2] for description in cursor.description]
-    cursor.execute(f'UPDATE {table_name} SET zn = ? WHERE connectionname = ?', (stat, 'БН-1'))
-    conn.commit() 
-    conn.close()'''
-    print('sdfklj')
-    print(stat)
-
-
+def update_checkbox(row,col,stat):
+    try:
+        conn = sqlite3.connect(db_path) 
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT * FROM {table_name}")
+        data = cursor.fetchall()
+        connectionname = data[row][1]
+        print(connectionname)
+        chb = table_index_for_update[col]
+        print(chb)
+        cursor.execute(f'UPDATE {table_name} SET {chb} = ? WHERE connectionname = ?', (stat, connectionname))
+        conn.commit() 
+        conn.close()
+    except sqlite3.Error as error:
+        print("Ошибка при работе с SQLite", error)
+    finally:
+        if conn:
+            conn.close()
+            print("Соединение с SQLite закрыто")
+    
+    
 class MainWindow(QWidget):
     def __init__(self, db_path, table_name):
         super().__init__()
@@ -97,9 +87,10 @@ class MainWindow(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-
-    db_path = "my_test.db"  
-    table_name = "Switch_t"  
+    # это и надо выносить в конфиг?
+    table_index_for_update = [ 'id', 'connectionname', 'terra', 'sekciya', 'yach', 'zn', 'pz', 'annotation' ]
+    db_path = "my_test.db" 
+    table_name = "Switch_t"
 
     window = MainWindow(db_path, table_name)
     window.show()
