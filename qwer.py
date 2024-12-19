@@ -72,15 +72,16 @@ def checkbox_changed(state, row, col, table, checkbox, db_path, table_name):
     conn.close()
 '''
 def update_checkbox(stat):
-    conn = sqlite3.connect(db_path) 
+    '''conn = sqlite3.connect(db_path) 
     cursor = conn.cursor()
     cursor.execute(f"SELECT * FROM {table_name}")
     data = cursor.fetchall()
     column_names = [description[2] for description in cursor.description]
     cursor.execute(f'UPDATE {table_name} SET zn = ? WHERE connectionname = ?', (stat, 'БН-1'))
     conn.commit() 
-    conn.close()
+    conn.close()'''
     print('sdfklj')
+    print(stat)
 
 
 class MainWindow(QWidget):
