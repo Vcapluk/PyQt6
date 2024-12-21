@@ -1,6 +1,8 @@
 import sys
 import sqlite3 
-from PyQt6.QtWidgets import QApplication, QLabel, QPushButton, QWidget, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QVBoxLayout, QAbstractItemView, QTabWidget
+from PyQt6.QtWidgets import (QApplication, QWidget, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox,
+                             QVBoxLayout, QAbstractItemView, QTabWidget, QPushButton, QDialog, QLabel, QLineEdit,
+                             QGridLayout, QComboBox, QMessageBox)
 from PyQt6.QtCore import Qt
 
 
@@ -85,26 +87,89 @@ def update_checkbox(id_value, col, stat, db_path, table_name):
             conn.close()
             print("Соединение с SQLite закрыто")
     
-    
+class AddRecordDialog(QDialog):
+    def init(self, db_path, table_name):
+        super().init()
+        self.setWindowTitle("Добавить новое присоединение")
+        self.db_path = db_path
+        self.table_name = table_name
+        self.table_index_for_update = ['connectionname', 'terra', 'sekciya', 'yach', 'zn', 'pz', 'annotation']
+        self.create_widgets()
+
+    def create_widgets(self):
+        grid = QGridLayout()
+        self.fields = {}
+        options = ['On', 'Off', '-']
+
+        row_num = 0
+        for column_name in self.table_index_for_update:
+            label = QLabel(column_name + ":")
+            if column_name in ['yach', 'zn', 'pz']:
+                combo_box = QComboBox()
+                combo_box.addItems(options)
+                grid.addWidget(label, row_num, 0)
+                grid.addWidget(combo_box, row_num, 1)
+                self.fields[column_name] = combo_box
+            else:
+                line_edit = QLineEdit()
+                grid.addWidget(label, row_num, 0)
+                grid.addWidget(line_edit, row_num, 1)
+                self.fields[column_name] = line_edit
+            row_num += 1
+
+        button_box = QHBoxLayout()
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(self.accept)
+        cancel_button = QPushButton("Отмена")
+        cancel_button.clicked.connect(self.reject)
+        button_box.addWidget(ok_button)
+        button_box.addWidget(cancel_button)
+
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(grid)
+        main_layout.addLayout(button_box)
+        self.setLayout(main_layout)
+
+    def accept(self):
+        try:
+            data = [self.fields[field].currentText() if field in ['yach', 'zn', 'pz'] else self.fields[field].text()
+                    for field in self.table_index_for_update]
+            data = tuple(data)
+
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            placeholders = ','.join(['?'] * len(self.table_index_for_update))
+            query = f"INSERT INTO {self.table_name} ({','.join(self.table_index_for_update)}) VALUES ({placeholders})"
+            cursor.execute(query, data)
+            conn.commit()
+            conn.close()
+            QMessageBox.information(self, "Успех", "Запись успешно добавлена!")
+            super().accept()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка при добавлении записи: {e}")
+
+
+
+
+
+
 class MainWindow(QWidget):
-    def __init__(self, db_path, table_name):
-        super().__init__()
-        self.setWindowTitle("Главное окно")
+    def init(self, db_path, table_name):
+        super().init()
+        self.setWindowTitle("Данные из базы данных")
         self.db_path = db_path
         self.table_name = table_name
         self.table_index_for_update = ['id', 'connectionname', 'terra', 'sekciya', 'yach', 'zn', 'pz', 'annotation']
+        self.create_widgets()
         self.create_tabs()
-        self.setFixedSize(900, 600)
+        self.setFixedSize(1200, 600)
 
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel("Это длинная надпись, которая определяет минимальную ширину окна."))
-        layout.addWidget(QPushButton("Кнопка"))
-        self.setLayout(layout)
 
-        # Получаем предпочтительный размер окна
-        size_hint = self.sizeHint()
-        # Устанавливаем минимальный размер, используя горизонтальную составляющую size_hint
-        self.setMinimumSize(size_hint.width(), 0) # 0 для вертикальной составляющей, она будет регулироваться автоматически
+    def create_widgets(self):
+        add_button = QPushButton("Добавить присоединение")
+        add_button.clicked.connect(self.add_record)
+        self.layout = QVBoxLayout(self)
+        self.layout.addWidget(add_button)
 
     def create_tabs(self):
         tabs = QTabWidget(self)
@@ -118,6 +183,28 @@ class MainWindow(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(tabs)
         self.setLayout(layout)
+    
+    def add_record(self):
+        dialog = AddRecordDialog(self.db_path, self.table_name)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.refresh_table() # Обновляем таблицу после добавления записи
+    
+    def refresh_table(self):
+        # Здесь нужно пересоздать таблицу, чтобы отобразить новые данные.
+        # Простой способ - удалить старую таблицу и создать новую
+        self.layout.removeWidget(self.tab_widget)
+        self.create_tabs()
+        self.setLayout(self.layout)
+
+    def create_tabs(self):
+        self.tab_widget = QTabWidget(self) # теперь нужно хранить ссылку на виджет вкладок
+        main_table = create_table_from_db(self.db_path, self.table_name, self.tab_widget)
+        self.tab_widget.addTab(main_table, "Все записи")
+
+        off_table = create_table_from_db(self.db_path, self.table_name, self.tab_widget, "yach = 'Off'")
+        self.tab_widget.addTab(off_table, "Записи с yach = 'Off'")
+
+        self.layout.addWidget(self.tab_widget) # добавить виджет вкладок в layout
 
 
 if __name__ == "__main__":
