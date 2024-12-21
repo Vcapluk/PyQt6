@@ -2,7 +2,7 @@ import sys
 import sqlite3 
 from PyQt6.QtWidgets import (QApplication, QWidget, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox,
                              QVBoxLayout, QAbstractItemView, QTabWidget, QPushButton, QDialog, QLabel, QLineEdit,
-                             QGridLayout, QComboBox, QMessageBox)
+                             QGridLayout, QComboBox, QMessageBox, QHBoxLayout)
 from PyQt6.QtCore import Qt
 
 
@@ -88,8 +88,8 @@ def update_checkbox(id_value, col, stat, db_path, table_name):
             print("Соединение с SQLite закрыто")
     
 class AddRecordDialog(QDialog):
-    def init(self, db_path, table_name):
-        super().init()
+    def __init__(self, db_path, table_name, parent=None): # Добавили parent=None
+        super().__init__(parent) # Теперь передаем parent корректно
         self.setWindowTitle("Добавить новое присоединение")
         self.db_path = db_path
         self.table_name = table_name
@@ -154,15 +154,15 @@ class AddRecordDialog(QDialog):
 
 
 class MainWindow(QWidget):
-    def init(self, db_path, table_name):
-        super().init()
+    def __init__(self, db_path, table_name):
+        super().__init__() # Создаём QWidget без родителя
         self.setWindowTitle("Данные из базы данных")
-        self.db_path = db_path
-        self.table_name = table_name
+        self.db_path = db_path # Сохраняем db_path как атрибут класса
+        self.table_name = table_name # Сохраняем table_name как атрибут класса
         self.table_index_for_update = ['id', 'connectionname', 'terra', 'sekciya', 'yach', 'zn', 'pz', 'annotation']
         self.create_widgets()
         self.create_tabs()
-        self.setFixedSize(1200, 600)
+        self.setFixedSize(900, 600)
 
 
     def create_widgets(self):
@@ -185,9 +185,9 @@ class MainWindow(QWidget):
         self.setLayout(layout)
     
     def add_record(self):
-        dialog = AddRecordDialog(self.db_path, self.table_name)
+        dialog = AddRecordDialog(self.db_path, self.table_name, self) # Передаем self как родителя
         if dialog.exec() == QDialog.DialogCode.Accepted:
-            self.refresh_table() # Обновляем таблицу после добавления записи
+            self.refresh_table()
     
     def refresh_table(self):
         # Здесь нужно пересоздать таблицу, чтобы отобразить новые данные.
