@@ -1,11 +1,46 @@
 import sys
+import os
 import sqlite3 
 from PyQt6.QtWidgets import (QApplication, QWidget, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox,
                              QVBoxLayout, QAbstractItemView, QTabWidget, QPushButton, QDialog, QLabel, QLineEdit,
-                             QGridLayout, QComboBox, QMessageBox, QHBoxLayout)
+                             QGridLayout, QComboBox, QMessageBox, QFormLayout, QHBoxLayout)
 from PyQt6.QtCore import Qt
 
 
+
+def create_database_and_table(db_path):
+    # Проверяем, существует ли база данных
+    if not os.path.exists(db_path):
+        # Создаем новую базу данных
+        conn = sqlite3.connect(db_path)
+        print(f"Создана база данных: {db_path}")
+    else:
+        conn = sqlite3.connect(db_path)
+        print(f"База данных уже существует: {db_path}")
+
+    cursor = conn.cursor()
+
+    # Проверяем, существует ли таблица "Switch_t"
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Switch_t (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            connectionname TEXT,
+            terra TEXT,
+            sekciya TEXT,
+            yach TEXT,
+            zn TEXT,
+            pz TEXT,
+            annotation TEXT
+        )
+    """)
+
+    # Сохраняем изменения и закрываем соединение
+    conn.commit()
+    conn.close()
+    print("Таблица 'Switch_t' проверена или создана.")
+
+# Вызов функции
+create_database_and_table('my_test.db')
 
 
 def create_table_from_db(db_path, table_name, parent, filter_condition=None): # Добавили filter_condition
@@ -155,10 +190,10 @@ class AddRecordDialog(QDialog):
 
 class MainWindow(QWidget):
     def __init__(self, db_path, table_name):
-        super().__init__() # Создаём QWidget без родителя
+        super().__init__()
         self.setWindowTitle("Данные из базы данных")
-        self.db_path = db_path # Сохраняем db_path как атрибут класса
-        self.table_name = table_name # Сохраняем table_name как атрибут класса
+        self.db_path = db_path
+        self.table_name = table_name
         self.table_index_for_update = ['id', 'connectionname', 'terra', 'sekciya', 'yach', 'zn', 'pz', 'annotation']
         self.create_widgets()
         self.create_tabs()
@@ -168,21 +203,30 @@ class MainWindow(QWidget):
     def create_widgets(self):
         add_button = QPushButton("Добавить присоединение")
         add_button.clicked.connect(self.add_record)
-        self.layout = QVBoxLayout(self)
-        self.layout.addWidget(add_button)
+        delete_button = QPushButton("Удалить запись")
+        delete_button.clicked.connect(self.delete_record)
 
-    def create_tabs(self):
-        tabs = QTabWidget(self)
-        main_table = create_table_from_db(self.db_path, self.table_name, tabs)
-        tabs.addTab(main_table, "Присоединения")
-
-        off_table = create_table_from_db(self.db_path, self.table_name, tabs, "yach = 'Off'")
-        tabs.addTab(off_table, "Отключенные присоединения")
-
+        self.id_combo = QComboBox()
+        self.populate_id_combo()
 
         layout = QVBoxLayout(self)
-        layout.addWidget(tabs)
-        self.setLayout(layout)
+        layout.addWidget(add_button)
+        layout.addWidget(delete_button)
+        layout.addWidget(QLabel("Выберите ID для удаления:"))
+        layout.addWidget(self.id_combo)
+        self.layout = layout
+
+
+    def create_tabs(self):
+        self.tab_widget = QTabWidget(self)
+        main_table = create_table_from_db(self.db_path, self.table_name, self.tab_widget)
+        self.tab_widget.addTab(main_table, "Все записи")
+
+        off_table = create_table_from_db(self.db_path, self.table_name, self.tab_widget, "yach = 'Off'")
+        self.tab_widget.addTab(off_table, "Записи с yach = 'Off'")
+
+        self.layout.addWidget(self.tab_widget)
+
     
     def add_record(self):
         dialog = AddRecordDialog(self.db_path, self.table_name, self) # Передаем self как родителя
@@ -190,19 +234,47 @@ class MainWindow(QWidget):
             self.refresh_table()
     
     def refresh_table(self):
-        # Здесь нужно пересоздать таблицу, чтобы отобразить новые данные.
-        # Простой способ - удалить старую таблицу и создать новую
         self.layout.removeWidget(self.tab_widget)
         self.create_tabs()
         self.setLayout(self.layout)
+        self.populate_id_combo() # обновляем выпадающий список после каждой операции
+
+    def populate_id_combo(self):
+        self.id_combo.clear()
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT id FROM {self.table_name} ORDER BY id DESC")
+        ids = cursor.fetchall()
+        conn.close()
+        self.id_combo.addItems([str(id[0]) for id in ids])
+
+    def delete_record(self):
+        selected_id = self.id_combo.currentText()
+        if not selected_id:
+            QMessageBox.warning(self, "Предупреждение", "Выберите ID для удаления.")
+            return
+
+        if QMessageBox.question(self, "Подтверждение", f"Вы действительно хотите удалить запись с ID {selected_id}?",
+                                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == \
+                QMessageBox.StandardButton.Yes:
+            try:
+                conn = sqlite3.connect(self.db_path)
+                cursor = conn.cursor()
+                cursor.execute(f"DELETE FROM {self.table_name} WHERE id = ?", (selected_id,))
+                conn.commit()
+                conn.close()
+                QMessageBox.information(self, "Успех", f"Запись с ID {selected_id} успешно удалена!")
+                self.refresh_table()
+            except Exception as e:
+                QMessageBox.critical(self, "Ошибка", f"Ошибка при удалении записи: {e}")
 
     def create_tabs(self):
         self.tab_widget = QTabWidget(self) # теперь нужно хранить ссылку на виджет вкладок
         main_table = create_table_from_db(self.db_path, self.table_name, self.tab_widget)
-        self.tab_widget.addTab(main_table, "Все записи")
+        self.tab_widget.addTab(main_table, "Присоединения")
 
         off_table = create_table_from_db(self.db_path, self.table_name, self.tab_widget, "yach = 'Off'")
-        self.tab_widget.addTab(off_table, "Записи с yach = 'Off'")
+        self.tab_widget.addTab(off_table, "Отключенные присоединения")
 
         self.layout.addWidget(self.tab_widget) # добавить виджет вкладок в layout
 
