@@ -1,40 +1,45 @@
 import sys
-from PyQt6.QtCore import QSize, QCoreApplication, QSettings
-from PyQt6.QtWidgets import QMainWindow, QWidget, QGridLayout, QApplication
-from PyQt6.QtGui import QIcon
 
-ORGANIZATION_NAME = 'Example App'
-ORGANIZATION_DOMAIN = 'example.com'
-APPLICATION_NAME = 'QSettings program'
-SETTINGS_TRAY = 'settings/tray'
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QLabel,
+    QMainWindow,
+    QStatusBar,
+    QToolBar,
+)
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setMinimumSize(QSize(480, 240))
-        self.setWindowTitle("Settings Application")
-        central_widget = QWidget(self)
-        central_widget.setLayout(QGridLayout())
-        central_widget.setLayout(QGridLayout())
-        central_widget.setLayout(QGridLayout())
-        central_widget.setLayout(QGridLayout())
-        central_widget.setLayout(QGridLayout())
-        central_widget.setLayout(QGridLayout())
-        central_widget.setLayout(QGridLayout())
-        central_widget.setLayout(QGridLayout())
-        central_widget.setLayout(QGridLayout())
-        central_widget.setLayout(QGridLayout())
-        central_widget.setLayout(QGridLayout())
-        central_widget.setLayout(QGridLayout())
-        self.setCentralWidget(central_widget)
 
-        QCoreApplication.setOrganizationName(ORGANIZATION_NAME)
-        QCoreApplication.setApplicationName(APPLICATION_NAME)
+        self.setWindowTitle("My Awesome App")
 
+        label = QLabel("Hello!")
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
+        self.setCentralWidget(label)
 
-    sys.exit(app.exec())
+        toolbar = QToolBar("My main toolbar")
+        self.addToolBar(toolbar)
+
+        button_action = QAction("Your button", self)
+        button_action.setStatusTip("This is your button")
+        button_action.triggered.connect(self.onMyToolBarButtonClick)
+        button_action.setCheckable(True)
+        toolbar.addAction(button_action)
+
+        self.setStatusBar(QStatusBar(self))
+
+    def onMyToolBarButtonClick(self, s):
+        print("click", s)
+
+app = QApplication(sys.argv)
+
+window = MainWindow()
+window.show()
+
+app.exec()
