@@ -67,6 +67,8 @@ create_database_and_table('my_test.db')
 
 
 def create_table_from_db_full(db_path, table_name, filter_condition=None): # Добавили filter_condition
+    table_index_ru_id = ['ID','присоединение', 'территория', 'секция', 'ячейка вкачна', 'ЗН включены', 'ПЗ установлено', 'примечание']
+        
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
@@ -77,10 +79,12 @@ def create_table_from_db_full(db_path, table_name, filter_condition=None): # Д�
     data = cursor.fetchall()
     column_names = [description[0] for description in cursor.description] # Исправлено: description[0]
     conn.close()
+    print(column_names)
 
     table = QTableWidget()
     table.setColumnCount(len(column_names))
-    table.setHorizontalHeaderLabels(column_names)
+    #table.setHorizontalHeaderLabels(column_names)
+    table.setHorizontalHeaderLabels(table_index_ru_id)
     table.setRowCount(len(data))
     table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
 
@@ -109,6 +113,8 @@ def create_table_from_db_full(db_path, table_name, filter_condition=None): # Д�
     return table
 
 def create_table_from_db(db_path, table_name, filter_condition=None): # Добавили filter_condition
+    table_index_ru_id = ['ID','присоединение', 'территория', 'секция', 'ячейка вкачна', 'ЗН включены', 'ПЗ установлено', 'примечание']
+    
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
@@ -122,7 +128,8 @@ def create_table_from_db(db_path, table_name, filter_condition=None): # Доба
 
     table = QTableWidget()
     table.setColumnCount(len(column_names))
-    table.setHorizontalHeaderLabels(column_names)
+    #table.setHorizontalHeaderLabels(column_names)
+    table.setHorizontalHeaderLabels(table_index_ru_id)
     table.setRowCount(len(data))
     table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
 
@@ -276,6 +283,7 @@ class AddRecordDialog(QDialog):
         self.db_path = db_path
         self.table_name = table_name
         self.table_index_for_update = ['connectionname', 'terra', 'sekciya', 'yach', 'zn', 'pz', 'annotation']
+        self.table_index_ru = ['присоединение', 'территория', 'секция', 'ячейка вкачна', 'ЗН включены', 'ПЗ установлено', 'примечание']
         self.create_widgets()
 
     def create_widgets(self):
@@ -285,7 +293,9 @@ class AddRecordDialog(QDialog):
 
         row_num = 0
         for column_name in self.table_index_for_update:
-            label = QLabel(column_name + ":")
+            print(column_name)
+            column_name_ru = self.table_index_ru[self.table_index_for_update.index(column_name)]
+            label = QLabel(column_name_ru + ":")
             if column_name in ['yach', 'zn', 'pz']:
                 combo_box = QComboBox()
                 combo_box.addItems(options)
@@ -354,10 +364,21 @@ class DeleteRecordDialog(QDialog):
         return self.id_input.text()
 
     def show_record_info(self, record):
+        print(record)
+        table_index_ru_id_slov = {
+            'id':'ID',
+            'connectionname':'присоединение', 
+            'terra':'территория', 
+            'sekciya':'секция', 
+            'yach':'ячейка вкачна', 
+            'zn':'ЗН включены', 
+            'pz':'ПЗ установлено', 
+            'annotation':'примечание'}
+    
         if record:
             info_text = "Информация о записи:\n"
             for key, value in record.items():
-                info_text += f"{key}: {value}\n"
+                info_text += f"{table_index_ru_id_slov[key]}: {value}\n"
             self.record_info.setText(info_text)
         else:
             self.record_info.setText("Запись не найдена.")
