@@ -83,8 +83,7 @@ def create_table_from_db_full(db_path, table_name, filter_condition=None): # Д�
 
     table = QTableWidget()
     table.setColumnCount(len(column_names))
-    #table.setHorizontalHeaderLabels(column_names)
-    table.setHorizontalHeaderLabels(table_index_ru_id)
+    table.setHorizontalHeaderLabels(table_index_ru_id)#русифицировали
     table.setRowCount(len(data))
     table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
 
@@ -128,8 +127,7 @@ def create_table_from_db(db_path, table_name, filter_condition=None): # Доба
 
     table = QTableWidget()
     table.setColumnCount(len(column_names))
-    #table.setHorizontalHeaderLabels(column_names)
-    table.setHorizontalHeaderLabels(table_index_ru_id)
+    table.setHorizontalHeaderLabels(table_index_ru_id)#русифицировали
     table.setRowCount(len(data))
     table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
 
@@ -211,6 +209,8 @@ class EditRecordDialog(QDialog):
         else:
             QMessageBox.warning(self, "Ошибка", "Пожалуйста, введите ID.")
 
+
+# почему то в одном классе EditRecordDialog все сделать не получается. Поэтому делаю еще один класс как подкласс
 
 class DataEditWindow(QDialog):
     def __init__(self, parent=None, conn=None, table_name=None, db_path=None, id_value=None):
@@ -371,7 +371,7 @@ class DeleteRecordDialog(QDialog):
             'yach':'ячейка вкачна', 
             'zn':'ЗН включены', 
             'pz':'ПЗ установлено', 
-            'annotation':'примечание'}
+            'annotation':'примечание'}# русифицируем еще разик
     
         if record:
             info_text = "Информация о записи:\n"
@@ -427,25 +427,6 @@ class MainWindow(QMainWindow):
         self.create_tabs()
         self.layout.addWidget(self.tab_widget)
 
-
-    def populate_table(self, table, filter_condition=None):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        query = f"SELECT * FROM {self.table_name}"
-        if filter_condition:
-            query += f" WHERE {filter_condition}"
-        cursor.execute(query)
-        data = cursor.fetchall()
-        columns = [description[0] for description in cursor.description]
-        conn.close()
-        row_count = len(data)
-        table.setRowCount(row_count)
-        for i, row in enumerate(data):
-            for j, value in enumerate(row):
-                item = QTableWidgetItem(str(value))
-                table.setItem(i, j, item)
-        table.setHorizontalHeaderLabels(columns) #обновляем заголовки после добавления строк
-
     
     def add_record(self):
         dialog = AddRecordDialog(self.db_path, self.table_name, self) # Передаем self как родителя
@@ -497,6 +478,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     # это и надо выносить в конфиг?
+    # возможно сюда бы еще надо добавить переменные для русификации... но я их оставил в коде
     table_index_for_update = [ 'id', 'connectionname', 'terra', 'sekciya', 'yach', 'zn', 'pz', 'annotation' ]
     db_path = "my_test.db" 
     table_name = "Switch_t"
